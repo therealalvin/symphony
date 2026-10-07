@@ -10,7 +10,7 @@ services:
       # Source code mounted outside container so edits update instantly without rebuilding
       - ./app:/app
       # Read-only access to your music files
-      - /home/bopat/Music:/music:ro
+      - /path/to/your/music:/music:ro
       # External SQLite database storage
       - ./data:/data
     environment:
