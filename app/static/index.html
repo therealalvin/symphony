@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symphony - Web Music Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-compact-disc spin-slow"></i>
+                <span>Symphony</span>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-section">Library</div>
+                <button class="nav-item active" data-view="all">
+                    <i class="fa-solid fa-music"></i> All Songs
+                </button>
+                <button class="nav-item" data-view="artists">
+                    <i class="fa-solid fa-user-group"></i> Artists
+                </button>
+                <button class="nav-item" data-view="albums">
+                    <i class="fa-solid fa-record-vinyl"></i> Albums
+                </button>
+                <button class="nav-item" data-view="genres">
+                    <i class="fa-solid fa-tags"></i> Genres
+                </button>
+            </nav>
+
+            <div class="sidebar-filters-wrapper">
+                <div class="nav-section">Active Filters</div>
+                <div id="active-filters" class="active-filters"></div>
+            </div>
+
+            <div class="sync-container">
+                <button id="sync-btn" class="btn btn-sync">
+                    <i class="fa-solid fa-rotate" id="sync-icon"></i> Re-sync Library
+                </button>
+                <div id="sync-status" class="sync-status">Ready</div>
+            </div>
+
+            <div class="library-stats" id="library-stats">
+                <span>0 Songs</span> • <span>0 Artists</span>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="view-header">
+                    <h1 id="view-title">All Songs</h1>
+                    <span id="view-subtitle" class="subtitle">0 tracks</span>
+                </div>
+
+                <div class="controls-bar">
+                    <div class="search-stack-container">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <select id="search-field" class="search-field-select">
+                                <option value="all">Any Field</option>
+                                <option value="title">Title</option>
+                                <option value="artist">Artist</option>
+                                <option value="album">Album</option>
+                                <option value="genre">Genre</option>
+                            </select>
+                            <input type="text" id="search-input" placeholder="Search...">
+                            <button id="add-filter-btn" class="btn-icon" title="Add Filter"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="sort-controls">
+                        <label for="sort-by"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort:</label>
+                        <select id="sort-by">
+                            <option value="title">Title</option>
+                            <option value="artist">Artist</option>
+                            <option value="genre">Genre</option>
+                            <option value="date_added">Date Added</option>
+                            <option value="album">Album</option>
+                        </select>
+                        <button id="sort-order-btn" class="btn-icon" title="Toggle Ascending/Descending">
+                            <i class="fa-solid fa-arrow-up-a-z" id="sort-order-icon"></i>
+                        </button>
+                    </div>
+
+                    <button id="replace-queue-all-btn" class="btn-icon" title="Clear Queue & Play All Results">
+                        <i class="fa-solid fa-circle-play"></i>
+                    </button>
+
+                    <button id="queue-all-btn" class="btn-icon" title="Queue All Results">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </button>
+
+                    <button id="toggle-queue-btn" class="btn-icon" title="View Queue">
+                        <i class="fa-solid fa-list-check"></i>
+                    </button>
+                </div>
+            </header>
+
+            <section id="content-container" class="content-container"></section>
+        </main>
+
+        <!-- Queue Drawer -->
+        <aside class="queue-drawer closed" id="queue-drawer">
+            <div class="queue-header">
+                <h3>Play Queue</h3>
+                <div>
+                    <button id="clear-queue-btn" class="btn-text">Clear</button>
+                    <button id="close-queue-btn" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="queue-drop-notice">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Drop songs or albums here to queue
+            </div>
+            <div class="queue-list" id="queue-list">
+                <p class="empty-msg">Queue is empty</p>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Visualizer Overlay -->
+    <div id="visualizer-overlay" class="visualizer-overlay hidden">
+        <canvas id="visualizer-canvas"></canvas>
+        <div class="visualizer-controls">
+            <span class="viz-title" id="viz-track-title">Symphony Visualizer</span>
+            <select id="viz-mode-select">
+                <option value="itunes">iTunes Cosmic Tunnel</option>
+                <option value="bars">Neon Frequency Spectrum</option>
+                <option value="magnetosphere">Magnetosphere 3D</option>
+                <option value="chroma_fluid">Chroma Liquid Diffusion</option>
+                <option value="cyber_grid">Synthwave Cyber Grid</option>
+                <option value="solar_flare">Solar Flare Pulsar</option>
+                <option value="matrix_rain">Digital Cyber Vortex</option>
+            </select>
+            <button id="close-viz-btn" class="btn-icon"><i class="fa-solid fa-compress"></i></button>
+        </div>
+    </div>
+
+    <!-- Equalizer Popover Modal -->
+    <div id="eq-modal" class="eq-modal hidden">
+        <div class="eq-header">
+            <div class="eq-title">
+                <i class="fa-solid fa-sliders"></i>
+                <span>5-Band Equalizer</span>
+            </div>
+            <div class="eq-header-controls">
+                <select id="eq-preset-select" class="eq-preset-select">
+                    <option value="flat">Flat</option>
+                    <option value="rock">Rock</option>
+                    <option value="pop">Pop</option>
+                    <option value="jazz">Jazz</option>
+                    <option value="classical">Classical</option>
+                    <option value="dance">Dance</option>
+                    <option value="bass">Bass Booster</option>
+                    <option value="vocal">Vocal Booster</option>
+                    <option value="acoustic">Acoustic</option>
+                    <option value="treble">Treble Booster</option>
+                    <option value="custom" disabled hidden>Custom</option>
+                </select>
+                <button id="btn-eq-bypass" class="btn-eq-toggle-switch active" title="Toggle EQ On/Off">ON</button>
+                <button id="close-eq-btn" class="btn-icon"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+        <div class="eq-body">
+            <div class="eq-band">
+                <span class="eq-value" id="eq-val-0">0.0 dB</span>
+                <div class="eq-slider-container">
+                    <input type="range" class="eq-slider" data-band="0" min="-12" max="12" step="0.5" value="0">
+                </div>
+                <span class="eq-freq">60Hz</span>
+            </div>
+            <div class="eq-band">
+                <span class="eq-value" id="eq-val-1">0.0 dB</span>
+                <div class="eq-slider-container">
+                    <input type="range" class="eq-slider" data-band="1" min="-12" max="12" step="0.5" value="0">
+                </div>
+                <span class="eq-freq">250Hz</span>
+            </div>
+            <div class="eq-band">
+                <span class="eq-value" id="eq-val-2">0.0 dB</span>
+                <div class="eq-slider-container">
+                    <input type="range" class="eq-slider" data-band="2" min="-12" max="12" step="0.5" value="0">
+                </div>
+                <span class="eq-freq">1kHz</span>
+            </div>
+            <div class="eq-band">
+                <span class="eq-value" id="eq-val-3">0.0 dB</span>
+                <div class="eq-slider-container">
+                    <input type="range" class="eq-slider" data-band="3" min="-12" max="12" step="0.5" value="0">
+                </div>
+                <span class="eq-freq">4kHz</span>
+            </div>
+            <div class="eq-band">
+                <span class="eq-value" id="eq-val-4">0.0 dB</span>
+                <div class="eq-slider-container">
+                    <input type="range" class="eq-slider" data-band="4" min="-12" max="12" step="0.5" value="0">
+                </div>
+                <span class="eq-freq">12kHz</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Audio Player -->
+    <footer class="player-bar">
+        <div class="now-playing">
+            <div class="album-art" id="player-art"><i class="fa-solid fa-music"></i></div>
+            <div class="track-details">
+                <div class="track-title" id="player-title">No Track Selected</div>
+                <div class="track-artist" id="player-artist">—</div>
+            </div>
+        </div>
+
+        <div class="player-center">
+            <div class="playback-buttons">
+                <button id="btn-shuffle" class="btn-icon" title="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
+                <button id="btn-prev" class="btn-icon" title="Previous"><i class="fa-solid fa-backward-step"></i></button>
+                <button id="btn-play" class="btn-icon btn-play-main" title="Play/Pause"><i class="fa-solid fa-play"></i></button>
+                <button id="btn-next" class="btn-icon" title="Next"><i class="fa-solid fa-forward-step"></i></button>
+                <button id="btn-repeat" class="btn-icon" title="Repeat"><i class="fa-solid fa-repeat"></i></button>
+            </div>
+            <div class="progress-container">
+                <span id="current-time">0:00</span>
+                <input type="range" id="seek-bar" value="0" max="100" step="0.1">
+                <span id="duration-time">0:00</span>
+            </div>
+        </div>
+
+        <div class="player-right">
+            <button id="btn-gain-toggle" class="btn-icon active-gain" title="Toggle Dynamics Normalization">
+                <i class="fa-solid fa-gauge-high"></i>
+            </button>
+
+            <button id="btn-eq-toggle" class="btn-icon" title="Equalizer">
+                <i class="fa-solid fa-sliders"></i>
+            </button>
+
+            <div class="volume-control">
+                <i class="fa-solid fa-volume-high" id="volume-icon"></i>
+                <input type="range" id="volume-bar" value="80" max="100">
+            </div>
+
+            <button id="btn-visualizer" class="btn-icon" title="Music Visualizers">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </button>
+        </div>
+    </footer>
+
+    <audio id="audio-element" crossorigin="anonymous"></audio>
+    <script src="/static/app.js"></script>
+</body>
+</html>

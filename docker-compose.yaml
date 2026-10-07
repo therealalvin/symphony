@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  music-player:
+    build: .
+    container_name: symphony_music_player
+    ports:
+      - "8000:8000"
+    volumes:
+      # Source code mounted outside container so edits update instantly without rebuilding
+      - ./app:/app
+      # Read-only access to your music files
+      - /home/bopat/Music:/music:ro
+      # External SQLite database storage
+      - ./data:/data
+    environment:
+      - MUSIC_DIR=/music
+      - DB_PATH=/data/library.db
+    restart: unless-stopped
